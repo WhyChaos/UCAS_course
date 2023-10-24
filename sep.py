@@ -8,9 +8,10 @@ from selenium.webdriver.support import expected_conditions as EC
 
 from parse import parse, is_login
 import chat
+from local.index import Local
 
 class Sep:
-    def __init__(self):
+    def __init__(self, local):
         # 创建EdgeOptions对象
         edge_options = webdriver.EdgeOptions()
 
@@ -22,6 +23,7 @@ class Sep:
         self.url = 'https://sep.ucas.ac.cn/'
         # 添加Cookie
         self.driver.get(self.url)
+        self.local = local
     
     def login(self, sepuser, JSESSIONID):
         cookie = {
@@ -83,11 +85,21 @@ class Sep:
         html = self.driver.page_source
         return parse(html, is_test, self)
     
-    def add_course(self, courseCode, courseSchool, courseName, interval, username, wechat_path):
+    def add_course(self, courseCode, courseSchool, courseName, interval, username, wechat_path, receiver_email, is_wechat, is_email):
         self.courseCode = courseCode
         self.courseSchool = courseSchool
         self.courseName = courseName
         self.interval = interval
         self.username = username
         self.wechat_path = wechat_path
-        
+        self.receiver_email=receiver_email
+        self.is_wechat=is_wechat
+        self.is_email=is_email
+        try:
+            data={'courseCode': courseCode, 'courseSchool': courseSchool,
+                  'courseName': courseName, 'interval': interval,
+                  'username': username, 'wechat_path': wechat_path,
+                  'receiver_email': receiver_email}
+            self.local.save(data)
+        except:
+            pass

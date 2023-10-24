@@ -5,13 +5,15 @@ from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButto
 sys.path.append('../')
 from sep import Sep
 from .mainwindow import MainWindow
+from local.index import Local
 
 class LoginWindow(QWidget):
     def __init__(self, stacked_widget):
         super().__init__()
         self.stacked_widget = stacked_widget
+        self.local=Local()
         self.init_ui()
-        self.sep = Sep()
+        self.sep = Sep(self.local)
 
     def init_ui(self):
         self.setWindowTitle('Cookie登录')
@@ -38,6 +40,9 @@ class LoginWindow(QWidget):
         layout.addStretch()
 
         self.setLayout(layout)
+        
+        self.username_input.setText(self.local.get_sepuser())
+        self.password_input.setText(self.local.get_JSESSIONID())
 
     def login(self):
         username = self.username_input.text()
@@ -51,13 +56,21 @@ class LoginWindow(QWidget):
             
         if self.sep.login(username, password):
             self.message_label.setText('登录成功')
-            main_window = MainWindow(self.stacked_widget, self.sep)
+            main_window = MainWindow(self.stacked_widget, self.sep, self.local)
             self.stacked_widget.addWidget(main_window)
             self.showMessageBox('登录成功')
+            self.save(username, password)
             self.stacked_widget.setCurrentIndex(1)  # 切换到新界面
         else:
             self.message_label.setText('登录失败')
             self.showMessageBox('登录失败')
+            
+    def save(self, username, password):
+        try:
+            data={'sepuser': username, 'JSESSIONID': password}
+            self.local.save(data)
+        except:
+            pass
             
     def showMessageBox(self, message):
         # 创建一个信息框

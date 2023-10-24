@@ -1,6 +1,6 @@
 from PyQt5.QtCore import Qt
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QStackedWidget, QVBoxLayout, QComboBox, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QLabel, QLineEdit, QPushButton, QVBoxLayout, QStackedWidget, QVBoxLayout, QComboBox, QMessageBox, QCheckBox
 sys.path.append('../')
 from sep import Sep
 from .logwindow import LogWindow
@@ -8,10 +8,11 @@ from .utils import school_list
 import threading
 
 class MainWindow(QWidget):
-    def __init__(self, stacked_widget, sep):
+    def __init__(self, stacked_widget, sep, local):
         super().__init__()
         self.sep = sep
         self.stacked_widget = stacked_widget
+        self.local = local
         self.init_ui()
 
     def init_ui(self):
@@ -33,10 +34,14 @@ class MainWindow(QWidget):
         self.interval_label = QLabel("查询时长(秒):")
         self.interval_field = QLineEdit()
         
+        self.is_wechat = QCheckBox('微信提示')
         self.wechat_path_label = QLabel("微信绝对路径")
         self.wechat_path_field = QLineEdit()
         self.username_label = QLabel("发送微信用户名：")
         self.username_field = QLineEdit()
+        self.is_email = QCheckBox('邮箱提示')
+        self.receiver_email_label = QLabel("邮箱：")
+        self.receiver_email_field = QLineEdit()
         
         # 创建一个查询按钮
         self.search_button = QPushButton("监听")
@@ -50,14 +55,25 @@ class MainWindow(QWidget):
         add_layout.addWidget(self.courseName_field)
         add_layout.addWidget(self.interval_label)
         add_layout.addWidget(self.interval_field)
+        add_layout.addWidget(self.is_wechat)
         add_layout.addWidget(self.wechat_path_label)
         add_layout.addWidget(self.wechat_path_field)
         add_layout.addWidget(self.username_label)
         add_layout.addWidget(self.username_field)
+        add_layout.addWidget(self.is_email)
+        add_layout.addWidget(self.receiver_email_label)
+        add_layout.addWidget(self.receiver_email_field)
         add_layout.addWidget(self.search_button)
         
 
         self.setLayout(add_layout)
+        
+        self.courseCode_field.setText(self.local.get_courseCode())
+        self.courseName_field.setText(self.local.get_courseName())
+        self.interval_field.setText(self.local.get_interval())
+        self.username_field.setText(self.local.get_username())
+        self.wechat_path_field.setText(self.local.get_wechat_path())
+        self.receiver_email_field.setText(self.local.get_receiver_email())
         
         
     def search(self):
@@ -65,13 +81,18 @@ class MainWindow(QWidget):
         courseSchool = self.combo_box.currentText()
         courseName = self.courseName_field.text()
         wechat_path=self.wechat_path_field.text()
+        receiver_email=self.receiver_email_field.text()
+        is_wechat=self.is_wechat.isChecked() 
+        is_email=self.is_email.isChecked()
         try:
             interval = float(self.interval_field.text())
         except:
             self.showMessageBox('间隔时间设置错误')
             return 
         username = self.username_field.text()
-        self.sep.add_course(courseCode=courseCode, courseSchool=courseSchool, courseName=courseName, interval=interval, username=username, wechat_path=wechat_path)
+        self.sep.add_course(courseCode=courseCode, courseSchool=courseSchool, courseName=courseName, 
+                            interval=interval, username=username, wechat_path=wechat_path, receiver_email=receiver_email,
+                            is_wechat=is_wechat, is_email=is_email)
         result = self.sep.query(is_test=True)
         if result == '成功':
             self.log_window = LogWindow(self.stacked_widget, self.sep)

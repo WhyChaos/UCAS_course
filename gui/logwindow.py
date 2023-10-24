@@ -45,6 +45,7 @@ class LogWindow(QWidget):
             
     def stop_execution(self):
         self.worker.terminate()
+        self.update_signal.emit('监听已终止')
             
     def appendLog(self, message):
         # current_text = self.log_text.toPlainText()
@@ -69,6 +70,18 @@ class Worker(QThread):
             # thread = threading.Thread(target=chat.send, args=(message, self.sep.username))
             # thread.start()
             if message[0] == '*':
-                chat.send(message=message, username=self.sep.username, wechat_path=self.sep.wechat_path)
+                if self.sep.is_wechat:
+                    try:
+                        chat.send(message=message, username=self.sep.username, wechat_path=self.sep.wechat_path)
+                        self.update_signal.emit('微信已发送')
+                    except:
+                        self.update_signal.emit('微信发送失败')
+                if self.sep.is_email:
+                    if chat.send_email(message_content=message, receiver_email=self.sep.receiver_email):
+                        self.update_signal.emit('邮件已发送')
+                    else:
+                        self.update_signal.emit('邮件发送失败')
+                self.update_signal.emit('监听已终止')
+                break
             print('----')
             time.sleep(self.sep.interval)
